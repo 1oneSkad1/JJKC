@@ -17,9 +17,9 @@
 ## 실행
 
 ```bash
-cd main
+cd jhs
 npm install
-npx prisma migrate dev   # 이미 했다면 생략
+npx prisma db push       # 이미 했다면 생략
 npm run dev
 # http://localhost:3000
 ```
@@ -142,9 +142,63 @@ main/
 | §주요 제약 / 토큰 보안 | 평문 저장 (데모). 운영 시 AES-256 적용 자리표시 |
 | §Step 8 시각화 (recharts) | `components/category-radar.tsx`, `category-bar.tsx`, `keyword-cloud.tsx` |
 
-## 다음 단계 (plan §확장 가능성)
+## 채널 클러스터링 & 추천 (`report/week12/조현성/channel_analyze_plan.md`)
 
+한국 채널(구독자 10만+)을 수집·클러스터링해 사용자 알고리즘에 맞는 채널을 추천.
+**채널을 사용자 프로필과 같은 카테고리 벡터 공간에 올려 기존 `profileSimilarity` 를
+재사용** → 추천 서빙 시 YouTube 호출 0u.
+
+```
+수집 (배치)                          ← scripts/channels-collect.ts
+   seed(trending+search) → channels.list enrich → 업로드 보강(§0.1 축 정렬)
+   → 구독자≥10만 & 한국채널 필터 → snowball(추천채널) BFS, CollectionRun 재개 가능
+   인증: YOUTUBE_API_KEY  또는  DB OAuth 토큰  또는  --mock(합성)
+   │
+   ▼
+클러스터링 (배치, 순수 TS)            ← scripts/channels-cluster.ts + lib/kmeans.ts
+   카테고리 벡터 → k-means++ → 실루엣으로 best-k → centroid{name:weight} 저장
+   │
+   ▼
+추천 (서빙, 0u)                       ← lib/channel-recommender.ts
+   사용자 categories ↔ centroid cosine 으로 클러스터 배정 (+ 2순위)
+   + 미구독 채널을 0.8·profileSimilarity + 0.1·metricMatch + 0.1·popularity 로 랭킹
+   (이미 구독한 채널 = AlgoProfile.subscribedChannelIds 로 제외)
+```
+
+실행:
+
+```bash
+# 쿼터 0 으로 즉시 체험
+npm run channels:collect -- --mock 300
+npm run channels:cluster        # 로그인 후 /discover
+
+# 실제 수집 (API key 또는 Google 로그인 필요), 재개 가능
+npm run channels:collect        # --no-search / --no-uploads 로 쿼터 절감
+npm run channels:cluster
+```
+
+| 구성 | 위치 |
+|---|---|
+| DB 모델 | `prisma/schema.prisma` — `Channel` / `ChannelCluster` / `CollectionRun` + `AlgoProfile.subscribedChannelIds` |
+| 공용 헬퍼 추출 | `lib/category-utils.ts` (profiler 와 channel-features 공유) |
+| 피처 벡터화 + 한국 채널 판정 | `lib/channel-features.ts` |
+| DB I/O (JSON↔String, BigInt) | `lib/channel-service.ts` |
+| k-means++ / 실루엣 / best-k | `lib/kmeans.ts` |
+| 추천 (배정 + 랭킹) | `lib/channel-recommender.ts` |
+| API | `/api/channels/recommend`, `/api/clusters`, `/api/clusters/[id]` |
+| UI | `app/discover/page.tsx` + `components/channel-recommendations.tsx` |
+
+## 다음 단계
+
+채널 기능:
+- **실제 채널 수집 실행** — dev.db 엔 검증용 mock 300개만. API key 발급/로그인 후 1,000개 적재.
+- **한국어 토큰화** 공백/기호 → 형태소 분석(mecab-ko 등) 으로 키워드 품질↑
+- **클러스터 2D 맵** (PCA/t-SNE 산점도 + 사용자 위치)
+- **추천 캐시 무효화** TTL → `lastSyncedAt`+클러스터 버전 키
+- **주간 갱신 자동화** (cron / `schedule`) 후 재클러스터
+
+기존 앱 (plan §확장 가능성):
 - 토큰 AES-256 암호화 wrapper (`lib/crypto.ts` 추가 자리)
-- Postgres/Neon 으로 전환 시: `schema.prisma` provider + Json/String[] 사용 + 새 migration
-- Upstash 자격증명만 추가하면 cache 가 자동 분산형
-- shadcn registry 의 더 많은 컴포넌트 (dropdown, dialog 등) 필요 시 `components/ui/` 에 추가
+- Postgres/Neon 전환: `schema.prisma` provider + Json/String[] + `migrate dev` (현재 db push)
+- Upstash 자격증명만 추가하면 cache 자동 분산형
+- shadcn registry 의 더 많은 컴포넌트 필요 시 `components/ui/` 에 추가

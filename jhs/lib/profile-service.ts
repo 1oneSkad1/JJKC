@@ -38,6 +38,7 @@ type DbProfile = {
   topKeywords: string;
   sampleVideoIds: string;
   metrics: string | null;
+  subscribedChannelIds?: string | null;
   lastSyncedAt: Date;
 };
 
@@ -49,6 +50,7 @@ function unpack(p: DbProfile): AlgoProfileShape {
     topKeywords: safeParse<string[]>(p.topKeywords, []),
     sampleVideoIds: safeParse<string[]>(p.sampleVideoIds, []),
     metrics: safeParse<ProfileMetrics>(p.metrics, DEFAULT_METRICS),
+    subscribedChannelIds: safeParse<string[]>(p.subscribedChannelIds, []),
     lastSyncedAt: p.lastSyncedAt.toISOString(),
   };
 }
@@ -74,13 +76,21 @@ export async function getProfileWithOwner(userId: string) {
   return { owner, profile: unpack(row) };
 }
 
-export async function saveProfile(userId: string, result: ProfileResult) {
+export async function saveProfile(
+  userId: string,
+  result: ProfileResult,
+  subscribedChannelIds?: string[],
+) {
   const data = {
     categories: JSON.stringify(result.categories),
     topChannels: JSON.stringify(result.topChannels),
     topKeywords: JSON.stringify(result.topKeywords),
     sampleVideoIds: JSON.stringify(result.sampleVideoIds),
     metrics: JSON.stringify(result.metrics),
+    // channel_analyze_plan §1: 추천에서 이미 구독한 채널 제외용.
+    ...(subscribedChannelIds
+      ? { subscribedChannelIds: JSON.stringify(subscribedChannelIds) }
+      : {}),
   };
   return prisma.algoProfile.upsert({
     where: { userId },

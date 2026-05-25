@@ -12,6 +12,15 @@
 // 그대로 사용).
 
 import type { TopChannel } from "./types";
+import {
+  bump,
+  entropyScore,
+  mainstreamScoreOf,
+  median,
+  nicheScoreOf,
+  parseIsoDuration,
+  topicNameFromUrl,
+} from "./category-utils";
 
 export interface ProfileMetrics {
   // rslt.md §4: 카테고리 엔트로피 / 집중도.
@@ -66,54 +75,9 @@ function recencyBoost(iso: string | undefined | null, now: number): number {
   return 0.8;
 }
 
-// ISO 8601 duration (PT#H#M#S) → seconds.
-function parseIsoDuration(iso?: string | null): number | null {
-  if (!iso) return null;
-  const m = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
-  if (!m) return null;
-  const h = parseInt(m[1] ?? "0", 10);
-  const min = parseInt(m[2] ?? "0", 10);
-  const s = parseInt(m[3] ?? "0", 10);
-  return h * 3600 + min * 60 + s;
-}
-
-function topicNameFromUrl(url: string): string | null {
-  const tail = url.split("/").pop();
-  return tail ? tail.replace(/_/g, " ") : null;
-}
-
-function bump(map: Record<string, number>, key: string, by: number) {
-  map[key] = (map[key] ?? 0) + by;
-}
-
-function median(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  const s = [...arr].sort((a, b) => a - b);
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 === 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
-}
-
-// 카테고리 엔트로피 (Shannon) → 0-100 normalize.
-function entropyScore(scores: Record<string, number>): {
-  diversity: number;
-  concentration: number;
-} {
-  const values = Object.values(scores).filter((v) => v > 0);
-  const total = values.reduce((a, b) => a + b, 0);
-  if (total <= 0 || values.length <= 1) {
-    return { diversity: 0, concentration: 100 };
-  }
-  let H = 0;
-  for (const v of values) {
-    const p = v / total;
-    H -= p * Math.log(p);
-  }
-  const Hmax = Math.log(values.length);
-  const diversity = Hmax > 0 ? Math.round((H / Hmax) * 100) : 0;
-  const top = Math.max(...values);
-  const concentration = Math.round((top / total) * 100);
-  return { diversity, concentration };
-}
+// 순수 카테고리 헬퍼(topicNameFromUrl / parseIsoDuration / bump / median /
+// entropyScore / mainstreamScoreOf / nicheScoreOf)는 lib/category-utils.ts 로
+// 추출되어 channel-features.ts 와 공유된다.
 
 export interface GenerateProfileInput {
   subscriptions: Any[];
@@ -351,17 +315,8 @@ export function generateProfile(
     primaryLanguage = sorted[0][0];
   }
 
-  const medViews = median(viewCounts);
-  // 1k views ≈ 0, 100M ≈ 100. log10 scale.
-  const mainstreamScore = medViews > 0
-    ? Math.max(0, Math.min(100, Math.round(((Math.log10(medViews) - 3) / 5) * 100)))
-    : 0;
-
-  const medSubs = median(subscriberCounts);
-  // 1k subs ≈ 100 (niche), 10M ≈ 0 (mega).
-  const nicheChannelScore = medSubs > 0
-    ? Math.max(0, Math.min(100, Math.round(100 - ((Math.log10(medSubs) - 3) / 4) * 100)))
-    : 0;
+  const mainstreamScore = mainstreamScoreOf(median(viewCounts));
+  const nicheChannelScore = nicheScoreOf(median(subscriberCounts));
 
   return {
     categories,

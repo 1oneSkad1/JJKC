@@ -11,6 +11,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
+    "channels:collect": "tsx scripts/channels-collect.ts",
+    "channels:cluster": "tsx scripts/channels-cluster.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -41,6 +43,7 @@
     "postcss": "^8.4.47",
     "prisma": "^6.19.3",
     "tailwindcss": "^3.4.13",
+    "tsx": "^4.22.3",
     "typescript": "^5.6.0"
   }
 }

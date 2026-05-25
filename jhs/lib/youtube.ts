@@ -10,6 +10,15 @@ export function getYouTubeClient(accessToken: string) {
   return google.youtube({ version: "v3", auth });
 }
 
+export type YouTubeClient = ReturnType<typeof getYouTubeClient>;
+
+// channel_analyze_plan §2: 배치 수집은 공개 데이터 읽기뿐이라 API key 로 충분
+// (OAuth 토큰보다 단순하고 사용자 컨텍스트 불필요). 키가 없으면 collect 스크립트가
+// DB 의 OAuth 토큰으로 폴백한다.
+export function getYouTubeClientByKey(apiKey: string) {
+  return google.youtube({ version: "v3", auth: apiKey });
+}
+
 // ---- Sync 단계 (Step 4) ----
 
 export async function getSubscriptions(token: string, max = 50) {
@@ -164,4 +173,125 @@ export async function getPopularByCategoryId(
     regionCode,
   });
   return r.data.items || [];
+}
+
+// ---- Channel catalog 수집 (channel_analyze_plan §2) ----
+// 아래 함수들은 이미 만들어 둔 client(yt)를 받아 재사용한다 — 배치 루프에서 한
+// 번만 만들어 돌린다. API key client 와 OAuth client 둘 다 받을 수 있다.
+
+// search.list type=channel — 토픽별 채널 seed. ★ 100u/페이지로 가장 비쌈.
+export async function searchChannelIds(
+  yt: YouTubeClient,
+  q: string,
+  opts: { regionCode?: string; pageToken?: string; max?: number } = {},
+): Promise<{ channelIds: string[]; nextPageToken?: string }> {
+  const r = await yt.search.list({
+    part: ["snippet"],
+    q,
+    type: ["channel"],
+    regionCode: opts.regionCode ?? "KR",
+    relevanceLanguage: "ko",
+    maxResults: opts.max ?? 50,
+    ...(opts.pageToken ? { pageToken: opts.pageToken } : {}),
+  });
+  const ids = (r.data.items || [])
+    .map((it: any) => it.snippet?.channelId || it.id?.channelId)
+    .filter((x: unknown): x is string => typeof x === "string");
+  return { channelIds: ids, nextPageToken: r.data.nextPageToken ?? undefined };
+}
+
+// videos.list chart=mostPopular → 트렌딩 영상의 channelId 추출 (1u/페이지, 메인스트림).
+export async function mostPopularChannelIds(
+  yt: YouTubeClient,
+  opts: { categoryId?: string; regionCode?: string; pageToken?: string; max?: number } = {},
+): Promise<{ channelIds: string[]; nextPageToken?: string }> {
+  const r = await yt.videos.list({
+    part: ["snippet"],
+    chart: "mostPopular",
+    regionCode: opts.regionCode ?? "KR",
+    maxResults: opts.max ?? 50,
+    ...(opts.categoryId ? { videoCategoryId: opts.categoryId } : {}),
+    ...(opts.pageToken ? { pageToken: opts.pageToken } : {}),
+  });
+  const ids = (r.data.items || [])
+    .map((it: any) => it.snippet?.channelId)
+    .filter((x: unknown): x is string => typeof x === "string");
+  return { channelIds: ids, nextPageToken: r.data.nextPageToken ?? undefined };
+}
+
+// channelSections.list → "추천 채널" 섹션의 featuredChannelsUrls (snowball, 1u).
+export async function getFeaturedChannelIds(
+  yt: YouTubeClient,
+  channelId: string,
+): Promise<string[]> {
+  const r = await yt.channelSections.list({
+    part: ["contentDetails", "snippet"],
+    channelId,
+  });
+  const out = new Set<string>();
+  (r.data.items || []).forEach((s: any) => {
+    (s.contentDetails?.channels ?? []).forEach((c: string) => out.add(c));
+  });
+  return [...out];
+}
+
+// channels.list?id=<≤50> — enrich (snippet/stats/topic/branding/contentDetails).
+export async function listChannelsByIds(yt: YouTubeClient, ids: string[]) {
+  if (ids.length === 0) return [];
+  const r = await yt.channels.list({
+    part: [
+      "snippet",
+      "statistics",
+      "topicDetails",
+      "brandingSettings",
+      "contentDetails",
+    ],
+    id: ids.slice(0, 50),
+    maxResults: 50,
+  });
+  return r.data.items || [];
+}
+
+// uploads playlist → 최근 영상 ID (§0.1 카테고리 정렬용 보강).
+export async function listUploadIds(
+  yt: YouTubeClient,
+  uploadsPlaylistId: string,
+  max = 10,
+): Promise<string[]> {
+  const r = await yt.playlistItems.list({
+    part: ["contentDetails"],
+    playlistId: uploadsPlaylistId,
+    maxResults: max,
+  });
+  return (r.data.items || [])
+    .map((it: any) => it.contentDetails?.videoId)
+    .filter((x: unknown): x is string => typeof x === "string");
+}
+
+// videos.list?id=<≤50> — 업로드 영상 메타(category/tags/duration/views).
+export async function listVideosByIdsClient(yt: YouTubeClient, ids: string[]) {
+  if (ids.length === 0) return [];
+  const r = await yt.videos.list({
+    part: ["snippet", "topicDetails", "contentDetails", "statistics"],
+    id: ids.slice(0, 50),
+    maxResults: 50,
+  });
+  return r.data.items || [];
+}
+
+// videoCategories id→name 맵 (client 버전).
+export async function videoCategoryMap(
+  yt: YouTubeClient,
+  regionCode = "KR",
+): Promise<Record<string, string>> {
+  const r = await yt.videoCategories.list({
+    part: ["snippet"],
+    regionCode,
+    hl: "en_US",
+  });
+  const m: Record<string, string> = {};
+  (r.data.items || []).forEach((it: any) => {
+    if (it.id && it.snippet?.title) m[it.id] = it.snippet.title;
+  });
+  return m;
 }

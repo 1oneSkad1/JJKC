@@ -26,6 +26,9 @@ export async function SiteNav() {
               <Link href="/dashboard" className="hover:underline">
                 Dashboard
               </Link>
+              <Link href="/discover" className="hover:underline">
+                Discover
+              </Link>
               <Link href="/compare" className="hover:underline">
                 Compare
               </Link>

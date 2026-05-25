@@ -91,6 +91,10 @@ model AlgoProfile {
   sampleVideoIds  String   // JSON: string[]
   metrics         String?  // JSON: ProfileMetrics (diversity, shortsRatio, languageDistribution, …)
 
+  // channel_analyze_plan §1: 추천에서 "이미 구독한 채널 제외" 용.
+  // sync 시 subscriptions.list 결과(추가 쿼터 0)에서 채워진다.
+  subscribedChannelIds String @default("[]") // JSON: string[]
+
   lastSyncedAt    DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -103,4 +107,63 @@ model Follow {
   following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@id([followerId, followingId])
+}
+
+// ---- Channel catalog (channel_analyze_plan.md) ----
+// 한국 채널(구독자 ≥ 10만) 카탈로그 + 클러스터.
+// JSON 필드는 AlgoProfile 과 동일하게 String 직렬화 (lib/channel-service.ts 가 pack/unpack).
+
+model Channel {
+  id              String   @id            // YouTube channelId (UC...)
+  title           String
+  handle          String?
+  thumbnail       String   @default("")
+  description     String?
+
+  subscriberCount Int      @default(0)
+  videoCount      Int      @default(0)
+  viewCount       BigInt   @default(0)
+  country         String?
+  isKorean        Boolean  @default(true)
+
+  categories      String   @default("{}")  // JSON: { name: 0-100 }
+  keywords        String   @default("[]")  // JSON: string[]
+  metrics         String?                  // JSON: { mainstreamScore, nicheScore, uploadsPerMonth }
+
+  clusterId       Int?
+  cluster         ChannelCluster? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+
+  source          String   @default("seed") // seed|trending|search|snowball|mock
+  fetchedAt       DateTime @default(now())
+  refreshedAt     DateTime @updatedAt
+
+  @@index([clusterId])
+  @@index([subscriberCount])
+  @@index([isKorean])
+}
+
+model ChannelCluster {
+  id            Int      @id @default(autoincrement())
+  label         String                     // 자동 라벨(top-2 카테고리) — 수기 수정 가능
+  centroid      String   @default("{}")    // JSON: { name: weight } 정규화 카테고리 벡터
+  topCategories String   @default("[]")    // JSON: [{ name, weight }]
+  topKeywords   String   @default("[]")    // JSON: string[]
+  size          Int      @default(0)
+  color         String?
+  channels      Channel[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 수집을 며칠에 걸쳐 재개 가능하게 하는 상태(일일 쿼터 분산).
+model CollectionRun {
+  id          Int      @id @default(autoincrement())
+  status      String   @default("running") // running|paused|done
+  acceptedN   Int      @default(0)
+  frontier    String   @default("[]")      // JSON: 미탐색 channelId 큐(snowball)
+  visited     String   @default("[]")      // JSON: 이미 처리한 channelId
+  quotaSpent  Int      @default(0)
+  note        String?
+  startedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

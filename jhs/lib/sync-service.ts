@@ -100,7 +100,9 @@ export async function performAutoSync(userId: string) {
     console.log("[sync] result.metrics", result.metrics);
     console.log("[sync] result.categories", result.categories);
 
-    const saved = await saveProfile(userId, result);
+    // channel_analyze_plan §1: 구독 채널 id 를 프로필에 저장(추가 쿼터 0) —
+    // /discover 추천에서 "이미 구독한 채널 제외" 에 사용.
+    const saved = await saveProfile(userId, result, channelIds);
     console.log("[sync] saved.metrics length", (saved as any).metrics?.length ?? null);
     // 프로필 캐시만 명시적으로 무효화.
     // 피드 캐시는 version-keyed (lastSyncedAt) — 새 sync 후 자동으로 새 key
