@@ -8,11 +8,9 @@
 | 폴더 | 설명 |
 |---|---|
 | **`jhs/`** | **메인 풀스택 앱** (Next.js 15 + Prisma + NextAuth + YouTube Data API). 현재 모든 기능이 여기 구현됨. |
-| `report/` | 주차별 기획·리포트 (`weekNN/조현성/`). 최신 계획: `report/week12/조현성/channel_analyze_plan.md` |
-| `prototype/` | 초기 mock 기반 프로토타입 (레거시, 참고용) |
-| `jimmy/` | 키워드 검색 PoC 스크립트 (레거시) |
-
-> 메인 앱은 `prototype/` → `jhs/` 로 이전되었습니다. 신규 작업은 모두 `jhs/` 에서 합니다.
+| `report/` | 주차별 기획·리포트 (`weekNN/(이름)/`). 최신 계획: `report/week12/(이름)/channel_analyze_plan.md` |
+| `prototype/` | 초기 mock 기반 프로토타입 (참고용) |
+| `jimmy/` | 키워드 검색 PoC 스크립트 |
 
 ## 🚀 실행
 
@@ -34,7 +32,7 @@ npm run dev          # http://localhost:3000
 - 카테고리 분포 / 대표 채널 / 키워드 / 지표(다양성·Shorts비율·니치도 등) 프로필
 - 공개/비공개 토글, 타인 알고리즘 피드(`/profile/[id]`), 비교(`/compare`), 닮은 사용자 추천
 
-### Phase 4 — 채널 클러스터링 & 추천 (이번 구현, `report/week12/조현성/channel_analyze_plan.md`)
+### Phase 4 — 채널 클러스터링 & 추천 (이번 구현, `report/week12/(이름)/channel_analyze_plan.md`)
 한국 채널(구독자 10만+)을 수집·벡터화·클러스터링해 사용자 알고리즘에 맞는 채널을 추천.
 **핵심: 채널을 사용자 프로필과 같은 카테고리 벡터 공간에 올려 기존 `profileSimilarity` 를 재사용 → 추천 서빙 쿼터 0u.**
 
@@ -74,7 +72,7 @@ npm run channels:cluster
 5. **추천 캐시 무효화 정교화** — 현재 TTL 기반. `lastSyncedAt` + 클러스터 버전 키로 sync/재클러스터 시 자동 무효화.
 6. **주간 갱신 자동화** — 채널 메타는 느리게 변함 → cron/`schedule` 로 주 1회 재수집·재클러스터.
 7. **마이그레이션화 & Postgres 전환** — 스키마는 `prisma db push` 로 반영됨(마이그레이션 미생성). `migrate dev` 로 이력화 + Neon 전환.
-8. **week12 메커니즘 리포트** — week10 리포트 형식으로 채널 파이프라인 분해 문서 작성(`report/week12/조현성/`).
+8. **week12 메커니즘 리포트** — week10 리포트 형식으로 채널 파이프라인 분해 문서 작성(`report/week12/(이름)/`).
 
 ---
 
