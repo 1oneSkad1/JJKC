@@ -36,6 +36,8 @@ export type PublicUser = {
   image: string | null;
   email: string | null;
   isPublic: boolean;
+  password?: string | null;
+  googleId?: string | null;
 };
 
 export type FeedVideo = {

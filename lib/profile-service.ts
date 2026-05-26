@@ -70,6 +70,8 @@ export async function getProfileWithOwner(userId: string) {
     image: row.user.image,
     email: row.user.email,
     isPublic: row.user.isPublic,
+    password: row.user.password,
+    googleId: row.user.googleId,
   };
   return { owner, profile: unpack(row) };
 }
