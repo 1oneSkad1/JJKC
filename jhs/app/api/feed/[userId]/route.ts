@@ -23,7 +23,7 @@ export async function GET(
   if (!result.ok) {
     const status =
       result.reason === "private" ? 403
-      : result.reason === "no_token" ? 401
+      : result.reason === "unavailable" ? 503
       : 404;
     return NextResponse.json({ error: result.reason }, { status });
   }

@@ -1,5 +1,8 @@
 // NextAuth v5 + Google OAuth + PrismaAdapter.
-// plan.md Step 2: youtube.readonly scope, offline access, consent prompt.
+// 식별용 로그인만. YouTube Data API 의존을 걷어내고 RSS/oEmbed/정적 카탈로그로
+// 전환했기 때문에 youtube.readonly scope, offline access, refresh token 모두
+// 더 이상 필요 없다. User.accessToken/refreshToken/expiresAt 컬럼은 스키마에
+// 남겨두되 새 로그인부터는 더 이상 채워지지 않는다.
 
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
@@ -15,14 +18,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       checks: ["state"],
       authorization: {
         params: {
-          scope: [
-            "openid",
-            "email",
-            "profile",
-            "https://www.googleapis.com/auth/youtube.readonly",
-          ].join(" "),
-          prompt: "consent",
-          access_type: "offline",
+          scope: ["openid", "email", "profile"].join(" "),
           response_type: "code",
         },
       },
@@ -35,27 +31,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
-    // signIn 은 매 로그인마다 발화 — returning user 의 access token 을
-    // 새로 받아 User 테이블에 미러링한다. (linkAccount 는 1회성)
     async signIn({ user, account, profile }) {
       if (account?.provider === "google" && user.id) {
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            // refreshToken 은 access_type=offline + prompt=consent 일 때만
-            // 반환되므로, 없는 경우 기존 값 유지.
-            ...(account.refresh_token
-              ? { refreshToken: account.refresh_token }
-              : {}),
-            accessToken: account.access_token,
-            expiresAt: account.expires_at,
             googleId:
               (profile as { sub?: string } | undefined)?.sub ?? undefined,
           },
-        }).catch(() => {
-          // 신규 유저의 경우 User row 가 아직 없을 수도 있음 — linkAccount
-          // 이벤트가 곧 같은 작업을 수행한다.
-        });
+        }).catch(() => {});
       }
       return true;
     },
@@ -67,9 +51,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: user.id },
           data: {
             googleId: (profile as { sub?: string } | undefined)?.sub,
-            accessToken: account.access_token,
-            refreshToken: account.refresh_token,
-            expiresAt: account.expires_at,
           },
         });
       }

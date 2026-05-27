@@ -143,8 +143,8 @@ export default async function DashboardPage() {
         </h2>
         {!feed.ok ? (
           <p className="text-sm text-muted-foreground">
-            {feed.reason === "no_token"
-              ? "YouTube 권한이 만료되었습니다. 로그아웃 후 다시 로그인해 주세요."
+            {feed.reason === "unavailable"
+              ? "외부 소스(RSS) 일시 불가. 잠시 후 다시 시도해 주세요."
               : "피드를 가져올 수 없습니다."}
           </p>
         ) : (

@@ -1,0 +1,318 @@
+# 한국어 → YouTube 카테고리 lexicon.
+#
+# 카테고리 이름은 YouTube videoCategories.list (regionCode=KR, hl=en_US) 의
+# title 과 정확히 같다 — feed-builder 의 NAME_TO_CATEGORY_ID 매핑과 동일 namespace.
+#
+# 매칭 규칙(lib/classify.ts):
+#   - 키워드는 소문자, 한글 그대로 비교
+#   - 채널 description + 최근 영상 title 들을 합친 텍스트에서 substring 검색
+#   - 동률은 weight 의 합으로 결정. weight 기본 1, 강한 시그널은 2~3
+#   - 마지막에 normalizeTopN 으로 0-100 로 정규화
+
+Music:
+  - { kw: "음악", w: 2 }
+  - { kw: "노래", w: 2 }
+  - { kw: "커버", w: 2 }
+  - { kw: "라이브", w: 1 }
+  - { kw: "kpop", w: 3 }
+  - { kw: "k-pop", w: 3 }
+  - { kw: "뮤직비디오", w: 3 }
+  - { kw: "엠브이", w: 2 }
+  - { kw: "발라드", w: 1 }
+  - { kw: "랩", w: 2 }
+  - { kw: "힙합", w: 2 }
+  - { kw: "버스킹", w: 2 }
+  - { kw: "오피셜", w: 1 }
+  - { kw: "official audio", w: 2 }
+  - { kw: "official mv", w: 3 }
+
+Gaming:
+  - { kw: "게임", w: 2 }
+  - { kw: "공략", w: 2 }
+  - { kw: "롤", w: 2 }
+  - { kw: "lol", w: 2 }
+  - { kw: "lck", w: 3 }
+  - { kw: "오버워치", w: 2 }
+  - { kw: "발로란트", w: 2 }
+  - { kw: "마인크래프트", w: 3 }
+  - { kw: "fps", w: 2 }
+  - { kw: "rpg", w: 1 }
+  - { kw: "스트리머", w: 2 }
+  - { kw: "플레이", w: 1 }
+  - { kw: "리그오브레전드", w: 2 }
+
+Comedy:
+  - { kw: "코미디", w: 3 }
+  - { kw: "comedy", w: 3 }
+  - { kw: "개그", w: 3 }
+  - { kw: "개그콘서트", w: 3 }
+  - { kw: "병맛", w: 3 }
+  - { kw: "유머", w: 2 }
+  - { kw: "웃긴", w: 2 }
+  - { kw: "drama parody", w: 2 }
+  - { kw: "패러디", w: 3 }
+  - { kw: "comedian", w: 3 }
+  - { kw: "콩트", w: 3 }
+  - { kw: "skit", w: 2 }
+  - { kw: "ㄹㅇㅋㅋ", w: 3 }
+  - { kw: "피식대학", w: 3 }
+  - { kw: "빠더너스", w: 3 }
+  - { kw: "꼰대희", w: 3 }
+  - { kw: "급식왕", w: 3 }
+  - { kw: "너덜트", w: 3 }
+  - { kw: "코미디언", w: 3 }
+
+Entertainment:
+  # 보강 원칙: 방송사·일반 단어는 빼고 *예능 프로그램명* 위주로.
+  # 일반 단어("쇼"/"show"/"방송"/"드라마") 는 People & Blogs / News 등과 겹쳐
+  # 부작용이 크므로 weight 1 이하로 두거나 제거.
+  - { kw: "예능", w: 2 }
+  - { kw: "버라이어티", w: 3 }
+  - { kw: "리액션", w: 2 }
+  - { kw: "토크쇼", w: 2 }
+  - { kw: "워크맨", w: 3 }
+  - { kw: "런닝맨", w: 3 }
+  - { kw: "무한도전", w: 3 }
+  - { kw: "아는형님", w: 3 }
+  - { kw: "유퀴즈", w: 3 }
+  - { kw: "라디오스타", w: 3 }
+  - { kw: "복면가왕", w: 3 }
+  - { kw: "1박2일", w: 3 }
+  - { kw: "예능맛집", w: 3 }
+  - { kw: "tvn d ent", w: 3 }
+  - { kw: "show music core", w: 3 }
+  - { kw: "엠뚜루마뚜루", w: 3 }
+  - { kw: "diggle", w: 3 }
+  - { kw: "스튜디오 룰루랄라", w: 3 }
+  - { kw: "스브스 예능맛집", w: 3 }
+  - { kw: "play 채널a", w: 3 }
+  - { kw: "디글", w: 3 }
+  - { kw: "drama parody", w: 2 }
+  - { kw: "tvn drama", w: 2 }
+
+Food:
+  - { kw: "먹방", w: 3 }
+  - { kw: "맛집", w: 2 }
+  - { kw: "요리", w: 2 }
+  - { kw: "레시피", w: 2 }
+  - { kw: "쿠킹", w: 2 }
+  - { kw: "음식", w: 1 }
+  - { kw: "리뷰", w: 1 }
+  - { kw: "asmr", w: 2 }
+  - { kw: "mukbang", w: 3 }
+  - { kw: "백종원", w: 2 }
+  - { kw: "야식", w: 1 }
+  - { kw: "분식", w: 1 }
+
+# YouTube category 중에 'Food' 가 없는 지역(KR 은 없음). 가장 가까운 분포로 People & Blogs / Howto & Style 에 흘려 보낸다.
+# classify.ts 가 lexicon 매칭 후 KR 표준 15 카테고리에만 남기도록 필터링하므로,
+# 여기 'Food' 라벨은 내부 임시 라벨이고 최종 분포에 반영하려면 mapping 필요.
+# → 데모 단계에서는 Food 를 'People & Blogs' 로 alias 처리 (alias 섹션 참고).
+
+"Howto & Style":
+  - { kw: "뷰티", w: 2 }
+  - { kw: "메이크업", w: 2 }
+  - { kw: "make up", w: 2 }
+  - { kw: "패션", w: 2 }
+  - { kw: "하울", w: 2 }
+  - { kw: "스킨케어", w: 2 }
+  - { kw: "diy", w: 2 }
+  - { kw: "스타일", w: 1 }
+  - { kw: "코디", w: 1 }
+  - { kw: "헤어", w: 1 }
+  - { kw: "vlog", w: 1 }
+
+"Science & Technology":
+  - { kw: "ai", w: 3 }
+  - { kw: "인공지능", w: 3 }
+  - { kw: "it", w: 2 }
+  - { kw: "테크", w: 2 }
+  - { kw: "리뷰", w: 1 }
+  - { kw: "갤럭시", w: 2 }
+  - { kw: "아이폰", w: 2 }
+  - { kw: "iphone", w: 2 }
+  - { kw: "맥북", w: 2 }
+  - { kw: "노트북", w: 1 }
+  - { kw: "코딩", w: 2 }
+  - { kw: "개발자", w: 2 }
+  - { kw: "프로그래밍", w: 2 }
+  - { kw: "tech", w: 2 }
+  - { kw: "신기술", w: 2 }
+
+Education:
+  - { kw: "강의", w: 3 }
+  - { kw: "공부", w: 2 }
+  - { kw: "수능", w: 3 }
+  - { kw: "강좌", w: 2 }
+  - { kw: "tutorial", w: 1 }
+  - { kw: "lecture", w: 3 }
+  - { kw: "tedx", w: 3 }
+  - { kw: "education", w: 3 }
+  - { kw: "교육", w: 3 }
+  - { kw: "학습", w: 2 }
+  - { kw: "지식", w: 2 }
+  # 키즈/동요는 Film & Animation 과 더 겹치므로 약하게 + alias 로 분산
+  - { kw: "동요", w: 2 }
+  - { kw: "동화", w: 2 }
+  - { kw: "nursery rhyme", w: 2 }
+  - { kw: "아기상어", w: 2 }
+  - { kw: "핑크퐁", w: 2 }
+  - { kw: "pinkfong", w: 2 }
+  - { kw: "뽀로로", w: 2 }
+  - { kw: "pororo", w: 2 }
+  - { kw: "타요", w: 2 }
+  - { kw: "초등", w: 2 }
+  - { kw: "중등", w: 2 }
+  - { kw: "고등", w: 2 }
+  - { kw: "재테크", w: 2 }
+  - { kw: "강사", w: 2 }
+  - { kw: "korean lesson", w: 3 }
+  - { kw: "한국어 공부", w: 3 }
+  - { kw: "엑셀", w: 2 }
+
+"News & Politics":
+  - { kw: "뉴스", w: 3 }
+  - { kw: "정치", w: 2 }
+  - { kw: "시사", w: 2 }
+  - { kw: "경제", w: 2 }
+  - { kw: "주식", w: 2 }
+  - { kw: "투자", w: 1 }
+  - { kw: "부동산", w: 2 }
+  - { kw: "분석", w: 1 }
+  - { kw: "보도", w: 1 }
+
+Sports:
+  - { kw: "축구", w: 2 }
+  - { kw: "야구", w: 2 }
+  - { kw: "농구", w: 2 }
+  - { kw: "골프", w: 2 }
+  - { kw: "ufc", w: 2 }
+  - { kw: "하이라이트", w: 1 }
+  - { kw: "k리그", w: 2 }
+  - { kw: "kbo", w: 2 }
+  - { kw: "epl", w: 2 }
+  - { kw: "월드컵", w: 2 }
+
+"People & Blogs":
+  - { kw: "브이로그", w: 3 }
+  - { kw: "vlog", w: 3 }
+  - { kw: "일상", w: 2 }
+  - { kw: "데일리", w: 1 }
+  - { kw: "talk", w: 1 }
+  - { kw: "라이프", w: 1 }
+
+"Travel & Events":
+  - { kw: "여행", w: 3 }
+  - { kw: "관광", w: 2 }
+  - { kw: "유럽", w: 1 }
+  - { kw: "일본", w: 1 }
+  - { kw: "동남아", w: 1 }
+  - { kw: "캠핑", w: 2 }
+  - { kw: "백패킹", w: 2 }
+  - { kw: "호텔", w: 1 }
+
+"Film & Animation":
+  - { kw: "영화", w: 2 }
+  - { kw: "리뷰", w: 1 }
+  - { kw: "예고편", w: 2 }
+  - { kw: "trailer", w: 2 }
+  - { kw: "애니메이션", w: 2 }
+  - { kw: "애니", w: 2 }
+  - { kw: "단편", w: 1 }
+
+"Autos & Vehicles":
+  - { kw: "자동차", w: 2 }
+  - { kw: "차", w: 1 }
+  - { kw: "테슬라", w: 2 }
+  - { kw: "현대", w: 1 }
+  - { kw: "기아", w: 1 }
+  - { kw: "시승", w: 2 }
+  - { kw: "오토바이", w: 2 }
+
+"Pets & Animals":
+  - { kw: "반려견", w: 3 }
+  - { kw: "반려묘", w: 3 }
+  - { kw: "강아지", w: 3 }
+  - { kw: "고양이", w: 3 }
+  - { kw: "냥이", w: 3 }
+  - { kw: "수의사", w: 3 }
+  - { kw: "동물농장", w: 3 }
+  - { kw: "댕댕이", w: 3 }
+  - { kw: "동물병원", w: 3 }
+  - { kw: "수족관", w: 2 }
+  - { kw: "파충류", w: 2 }
+  - { kw: "햄스터", w: 2 }
+  - { kw: "고슴도치", w: 2 }
+  - { kw: "코기", w: 2 }
+  - { kw: "시바견", w: 3 }
+  - { kw: "푸들", w: 2 }
+  - { kw: "리트리버", w: 2 }
+  - { kw: "집사", w: 3 }
+  - { kw: "야옹", w: 2 }
+  - { kw: "멍멍", w: 2 }
+  - { kw: "boduo", w: 2 }
+  - { kw: "보듬", w: 2 }
+
+# 새 lexicon: Nonprofits & Activism (종교/봉사/정부/공공/지자체/시민단체)
+"Nonprofits & Activism":
+  - { kw: "교회", w: 3 }
+  - { kw: "church", w: 3 }
+  - { kw: "기도", w: 2 }
+  - { kw: "예배", w: 3 }
+  - { kw: "성경", w: 3 }
+  - { kw: "찬양", w: 2 }
+  - { kw: "목사", w: 3 }
+  - { kw: "장로", w: 2 }
+  - { kw: "전도", w: 2 }
+  - { kw: "선교", w: 3 }
+  - { kw: "미사", w: 2 }
+  - { kw: "신부", w: 2 }
+  - { kw: "수녀", w: 2 }
+  - { kw: "성당", w: 2 }
+  - { kw: "법회", w: 2 }
+  - { kw: "불교", w: 3 }
+  - { kw: "스님", w: 3 }
+  - { kw: "사찰", w: 2 }
+  - { kw: "포교", w: 2 }
+  - { kw: "복음", w: 2 }
+  - { kw: "구원", w: 1 }
+  - { kw: "기독교", w: 3 }
+  - { kw: "천주교", w: 3 }
+  - { kw: "후원", w: 2 }
+  - { kw: "기부", w: 2 }
+  - { kw: "기관", w: 1 }
+  - { kw: "비영리", w: 3 }
+  - { kw: "nonprofit", w: 3 }
+  - { kw: "월드비전", w: 3 }
+  - { kw: "굿네이버스", w: 3 }
+  - { kw: "유니세프", w: 3 }
+  - { kw: "초록우산", w: 3 }
+  - { kw: "세이브더칠드런", w: 3 }
+  # "시청" 은 "시청자" 와 substring 매치, "공공/관청/방송국/구청" 도 일반 채널에
+  # 부작용. broad 한 한글은 제외하고, 명확한 정부/공익기관 표현만 남긴다.
+  - { kw: "공익재단", w: 3 }
+  - { kw: "지방자치단체", w: 3 }
+  - { kw: "관광공사", w: 3 }
+  - { kw: "보훈", w: 2 }
+  - { kw: "복지사", w: 2 }
+  - { kw: "활동가", w: 2 }
+  - { kw: "운동가", w: 2 }
+  - { kw: "campaign for", w: 2 }
+  - { kw: "캠페인", w: 2 }
+  - { kw: "ngo", w: 3 }
+  - { kw: "통일부", w: 3 }
+  - { kw: "탈북", w: 3 }
+  - { kw: "충주시청", w: 3 }
+  - { kw: "다일공동체", w: 3 }
+  - { kw: "기독교방송", w: 3 }
+  - { kw: "불교방송", w: 3 }
+  - { kw: "법회", w: 3 }
+  - { kw: "단체", w: 1 }
+  - { kw: "ministry", w: 2 }
+
+# Food 라벨 -> 표준 카테고리 매핑.
+# Howto & Style 50% / People & Blogs 50% 로 흩뿌리는 게 KR 채널 실태와 가깝다.
+aliases:
+  Food:
+    - { to: "Howto & Style", w: 0.5 }
+    - { to: "People & Blogs", w: 0.5 }

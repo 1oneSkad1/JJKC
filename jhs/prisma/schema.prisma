@@ -62,7 +62,9 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  // YouTube tokens (plan: 암호화 저장. 데모는 평문)
+  // (DEPRECATED) YouTube OAuth 토큰. YouTube API 호출을 걷어내면서 더 이상
+  // 안 쓰지만 마이그레이션 비용을 피하려고 컬럼은 남겨둔다 — 새 로그인부터는
+  // 채워지지 않는다.
   accessToken   String?
   refreshToken  String?
   expiresAt     Int?
@@ -72,6 +74,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   profile       AlgoProfile?
+  onboardInput  OnboardInput?
 
   following     Follow[]  @relation("follower")
   followers     Follow[]  @relation("following")
@@ -97,6 +100,21 @@ model AlgoProfile {
 
   lastSyncedAt    DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// 폼(/onboard) 원본 입력을 보존. AlgoProfile 은 이 입력에서 파생되며,
+// 카탈로그/분류기 업데이트 시 재계산할 수 있도록 원본을 따로 둔다.
+model OnboardInput {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  channelIds    String   @default("[]")  // JSON: string[]  — 사용자가 고른 채널
+  categories    String   @default("[]")  // JSON: string[]  — 체크한 카테고리 이름
+  playlistUrls  String   @default("[]")  // JSON: string[]  — 선택 보강용
+
+  submittedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Follow {

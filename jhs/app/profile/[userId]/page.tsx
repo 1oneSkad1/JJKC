@@ -118,8 +118,8 @@ export default async function ProfilePage({
           </p>
         ) : feed && !feed.ok ? (
           <p className="text-sm text-muted-foreground">
-            {feed.reason === "no_token"
-              ? "YouTube 권한 갱신이 필요합니다."
+            {feed.reason === "unavailable"
+              ? "외부 소스(RSS) 일시 불가."
               : "피드를 가져올 수 없습니다."}
           </p>
         ) : (
